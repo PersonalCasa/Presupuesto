@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#f4f4f0">
+<meta name="theme-color" content="#2d5a3d">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Presupuesto">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Presupuesto 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -119,6 +123,51 @@
   .retry-btn{margin-top:0.5rem;background:var(--red);color:#fff;border:none;border-radius:6px;padding:0.4rem 0.8rem;font-family:var(--font-display);font-size:0.75rem;cursor:pointer;}
 
   @keyframes fadeUp{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  /* ── Global tab ── */
+  #global-view{display:none;}
+  .global-main{padding:1rem;max-width:700px;margin:0 auto;}
+
+  .g-section{margin-bottom:1.2rem;}
+  .g-section-title{font-size:0.6rem;font-family:var(--font-mono);color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.4rem;}
+
+  .g-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-bottom:1rem;}
+
+  .g-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;box-shadow:var(--shadow);animation:fadeUp 0.3s ease both;}
+  .g-card.red{border-color:#fca5a5;background:#fff8f8;}
+  .g-card.green{border-color:#86efac;background:#f0fdf4;}
+  .g-card.yellow{border-color:#fde68a;background:#fffbeb;}
+  .g-card.blue{border-color:#bae6fd;background:#f0f9ff;}
+
+  .g-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;margin-bottom:0.3rem;}
+  .g-card-name{font-size:0.82rem;font-weight:700;color:var(--text);}
+  .g-card-value{font-family:var(--font-mono);font-size:0.82rem;font-weight:600;flex-shrink:0;}
+  .g-card-value.neg{color:var(--red);}
+  .g-card-value.pos{color:var(--green);}
+  .g-card-sub{font-family:var(--font-mono);font-size:0.62rem;color:var(--muted);}
+
+  .alert-item{display:flex;align-items:flex-start;gap:0.6rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;box-shadow:var(--shadow);margin-bottom:0.5rem;animation:fadeUp 0.3s ease both;}
+  .alert-item.red{border-color:#fca5a5;background:#fff8f8;}
+  .alert-item.yellow{border-color:#fde68a;background:#fffbeb;}
+  .alert-item.green{border-color:#86efac;background:#f0fdf4;}
+  .alert-icon{font-size:1.1rem;flex-shrink:0;margin-top:0.05rem;}
+  .alert-body{}
+  .alert-title{font-size:0.82rem;font-weight:700;color:var(--text);margin-bottom:0.15rem;}
+  .alert-desc{font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);line-height:1.5;}
+
+  .proj-bar-wrap{margin-bottom:0.5rem;}
+  .proj-bar-header{display:flex;justify-content:space-between;margin-bottom:0.25rem;}
+  .proj-bar-label{font-size:0.75rem;font-weight:600;}
+  .proj-bar-vals{font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);}
+  .proj-track{height:10px;background:var(--surface2);border-radius:99px;overflow:visible;position:relative;}
+  .proj-fill-real{height:100%;border-radius:99px;position:absolute;top:0;left:0;transition:width 0.7s cubic-bezier(.4,0,.2,1);}
+  .proj-fill-proj{height:100%;border-radius:99px 0 0 99px;position:absolute;top:0;opacity:0.35;}
+  .proj-marker{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text);border-radius:1px;opacity:0.4;}
+
+  .summary-stat{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);}
+  .summary-stat:last-child{border-bottom:none;}
+  .summary-stat-label{font-size:0.78rem;color:var(--text2);}
+  .summary-stat-value{font-family:var(--font-mono);font-size:0.78rem;font-weight:600;}
 </style>
 </head>
 <body>
@@ -134,6 +183,9 @@
     <button class="reload-btn" onclick="loadData()">↻ Actualizar</button>
   </div>
   <div class="month-tabs" id="month-tabs"></div>
+
+  <!-- Vista mensual -->
+  <div id="month-view">
   <div class="main">
     <div id="error-container"></div>
     <div class="update-banner">🕐 Última actualización: <span id="update-date">—</span></div>
@@ -169,8 +221,15 @@
         <tbody id="summary-body"></tbody>
       </table>
     </div>
+  </div><!-- /.main -->
+  </div><!-- /#month-view -->
+
+  <!-- Vista global -->
+  <div id="global-view" style="display:none">
+    <div class="global-main" id="global-main"></div>
   </div>
-</div>
+
+</div><!-- /#dashboard -->
 
 <script>
 const XLSX_URL = 'https://raw.githubusercontent.com/PersonalCasa/Presupuesto/main/Presupuesto_2026.xlsx';
@@ -180,7 +239,7 @@ const DIAS_MES  = {Mayo:31,Junio:30,Julio:31,Agosto:31,Setiembre:30,Octubre:31,N
 const IDX_CONTENEDORES = 2;
 const IDX_TARJETA_REC  = 10;
 
-let data = {}, currentMes = null, sortByPct = true;
+let data = {}, currentMes = null, sortByPct = true, viewMode = 'month';
 
 async function loadData() {
   showLoading(true);
@@ -266,10 +325,18 @@ function parseWorkbook(wb) {
 
 function render() {
   renderTabs();
-  renderDepositos();
-  renderKPIs();
-  renderBars();
-  renderTable();
+  if (viewMode === 'global') {
+    document.getElementById('month-view').style.display = 'none';
+    document.getElementById('global-view').style.display = 'block';
+    renderGlobal();
+  } else {
+    document.getElementById('month-view').style.display = 'block';
+    document.getElementById('global-view').style.display = 'none';
+    renderDepositos();
+    renderKPIs();
+    renderBars();
+    renderTable();
+  }
 }
 
 function renderTabs() {
@@ -278,11 +345,19 @@ function renderTabs() {
   MESES.forEach(m => {
     const hasData = data[m] && Object.values(data[m].real).some(v=>v!==null);
     const btn = document.createElement('button');
-    btn.className = 'month-btn'+(m===currentMes?' active':'')+(hasData&&m!==currentMes?' has-data':'');
+    const isActive = viewMode==='month' && m===currentMes;
+    btn.className = 'month-btn'+(isActive?' active':'')+(hasData&&!isActive?' has-data':'');
     btn.textContent = m.substring(0,3);
-    btn.onclick = () => { currentMes=m; render(); };
+    btn.onclick = () => { viewMode='month'; currentMes=m; render(); };
     c.appendChild(btn);
   });
+  // Pestaña Global
+  const gBtn = document.createElement('button');
+  gBtn.className = 'month-btn'+(viewMode==='global'?' active':'');
+  gBtn.style.cssText = 'border-color:var(--accent);color:'+(viewMode==='global'?'#fff':'var(--accent)')+';background:'+(viewMode==='global'?'var(--accent)':'var(--accent-light)')+';';
+  gBtn.textContent = '📊 Global';
+  gBtn.onclick = () => { viewMode='global'; render(); };
+  c.appendChild(gBtn);
 }
 
 function fmt(n) {
@@ -459,6 +534,163 @@ function renderTable() {
     tr.onclick = () => { currentMes=mes; render(); };
     tbody.appendChild(tr);
   });
+}
+
+function renderGlobal() {
+  const c = document.getElementById('global-main');
+  c.innerHTML = '';
+
+  const mesesConDatos = MESES.filter(m => data[m] && Object.values(data[m].real).some(v=>v!==null));
+  if (mesesConDatos.length === 0) {
+    c.innerHTML = '<div style="padding:2rem;text-align:center;font-family:var(--font-mono);font-size:0.8rem;color:var(--muted)">Sin datos cargados en ningún mes.</div>';
+    return;
+  }
+
+  // ── Calcular acumulados por categoría ──
+  const allHeaders = data[MESES[0]].headers;
+  const catStats = {}; // { presTotal, realTotal, mesesConDato }
+  allHeaders.forEach(h => {
+    catStats[h] = { presTotal:0, realTotal:0, n:0 };
+  });
+
+  let presGlobal=0, realGlobal=0;
+  const monthStats = [];
+
+  mesesConDatos.forEach(mes => {
+    const d = data[mes];
+    const presT = d.presTotal;
+    const realT = Object.values(d.real).reduce((a,b)=>a+(b||0),0);
+    presGlobal += presT;
+    realGlobal += realT;
+    monthStats.push({mes, presT, realT, diff:presT-realT});
+    allHeaders.forEach(h => {
+      catStats[h].presTotal += d.presupuesto[h]||0;
+      if (d.real[h]!==null) { catStats[h].realTotal += d.real[h]; catStats[h].n++; }
+    });
+  });
+
+  // Proyección anual (extrapolar promedio mensual a 8 meses)
+  const avgMensual = realGlobal / mesesConDatos.length;
+  const mesesRestantes = MESES.length - mesesConDatos.length;
+  const presAnual = MESES.reduce((a,m)=>a+(data[m]?data[m].presTotal:0),0);
+  const proyAnual = realGlobal + (avgMensual * mesesRestantes);
+  const desvioProyAnual = presAnual - proyAnual;
+
+  // Top desvíos negativos y positivos por categoría
+  const catDesvios = allHeaders
+    .filter(h => catStats[h].n > 0 && catStats[h].presTotal > 0)
+    .map(h => ({
+      h,
+      diff: catStats[h].presTotal - catStats[h].realTotal,
+      pct: catStats[h].realTotal / catStats[h].presTotal * 100
+    }))
+    .sort((a,b) => a.diff - b.diff);
+
+  const topNeg = catDesvios.filter(x=>x.diff<0).slice(0,3);
+  const topPos = catDesvios.filter(x=>x.diff>=0).reverse().slice(0,3);
+
+  // ── Render ──
+  let html = '';
+
+  // Resumen global
+  html += `<div class="update-banner" style="margin-bottom:1rem">📊 Análisis global — ${mesesConDatos.length} de ${MESES.length} meses con datos</div>`;
+
+  html += `<div class="g-section">
+    <div class="g-section-title">💰 Resumen acumulado</div>
+    <div class="g-kpi-row">
+      <div class="kpi"><div class="kpi-label">Presupuestado acumulado</div><div class="kpi-value accent">${fmt(presGlobal)}</div><div class="kpi-sub">${mesesConDatos.length} meses</div></div>
+      <div class="kpi"><div class="kpi-label">Ejecutado acumulado</div><div class="kpi-value ${realGlobal>presGlobal?'negative':'positive'}">${fmt(realGlobal)}</div><div class="kpi-sub">${(realGlobal/presGlobal*100).toFixed(1)}% del presupuesto</div></div>
+      <div class="kpi"><div class="kpi-label">Diferencia acumulada</div><div class="kpi-value ${presGlobal-realGlobal>=0?'positive':'negative'}">${fmt(Math.abs(presGlobal-realGlobal))}</div><div class="kpi-sub">${presGlobal-realGlobal>=0?'▲ a favor':'▼ excedido'}</div></div>
+      <div class="kpi"><div class="kpi-label">Promedio mensual real</div><div class="kpi-value accent">${fmt(avgMensual)}</div><div class="kpi-sub">vs ${fmt(presGlobal/mesesConDatos.length)} presupuestado</div></div>
+    </div>
+  </div>`;
+
+  // Proyección anual
+  const projPct = Math.min(proyAnual/presAnual*100, 200);
+  const realPct = Math.min(realGlobal/presAnual*100, 100);
+  html += `<div class="g-section">
+    <div class="g-section-title">🔮 Proyección anual (${mesesRestantes} meses restantes)</div>
+    <div class="g-card ${desvioProyAnual>=0?'green':'red'}" style="margin-bottom:0.5rem">
+      <div class="g-card-header">
+        <div class="g-card-name">Proyección al cierre del año</div>
+        <div class="g-card-value ${desvioProyAnual>=0?'pos':'neg'}">${fmt(proyAnual)}</div>
+      </div>
+      <div class="g-card-sub" style="margin-bottom:0.6rem">Presupuesto anual: ${fmt(presAnual)} — Desvío proyectado: <strong style="color:${desvioProyAnual>=0?'var(--green)':'var(--red)'}">${desvioProyAnual>=0?'+':''}${fmt(desvioProyAnual)}</strong></div>
+      <div class="proj-track" style="height:10px;background:var(--surface2);border-radius:99px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;height:100%;width:${realPct}%;background:var(--celeste);border-radius:99px;"></div>
+        <div style="position:absolute;top:0;left:${realPct}%;height:100%;width:${Math.min(projPct-realPct,100-realPct)}%;background:var(--celeste);opacity:0.3;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:0.3rem;font-family:var(--font-mono);font-size:0.6rem;color:var(--muted)">
+        <span>■ Real: ${fmt(realGlobal)}</span><span>░ Proyectado: ${fmt(proyAnual-realGlobal)}</span><span>Total: ${fmt(presAnual)}</span>
+      </div>
+    </div>
+  </div>`;
+
+  // Mayores desvíos negativos
+  html += `<div class="g-section"><div class="g-section-title">⚠ Categorías que más se excedieron</div>`;
+  if (topNeg.length === 0) {
+    html += `<div class="alert-item green"><div class="alert-icon">✅</div><div class="alert-body"><div class="alert-title">Sin excesos acumulados</div><div class="alert-desc">Todas las categorías están dentro del presupuesto en el período analizado.</div></div></div>`;
+  } else {
+    topNeg.forEach((x,i) => {
+      html += `<div class="g-card red" style="animation-delay:${i*0.05}s">
+        <div class="g-card-header"><div class="g-card-name">⚠ ${x.h}</div><div class="g-card-value neg">▼ ${fmt(Math.abs(x.diff))}</div></div>
+        <div class="g-card-sub">${x.pct.toFixed(0)}% del presupuesto consumido · acumulado ${mesesConDatos.length} meses</div>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+
+  // Mayores ahorros
+  html += `<div class="g-section"><div class="g-section-title">✅ Categorías con mayor ahorro</div>`;
+  if (topPos.length === 0) {
+    html += `<div class="alert-item yellow"><div class="alert-icon">ℹ</div><div class="alert-body"><div class="alert-title">Sin ahorros registrados aún</div><div class="alert-desc">Cargá más meses para ver dónde estás gastando menos de lo planificado.</div></div></div>`;
+  } else {
+    topPos.forEach((x,i) => {
+      html += `<div class="g-card green" style="animation-delay:${i*0.05}s">
+        <div class="g-card-header"><div class="g-card-name">${x.h}</div><div class="g-card-value pos">▲ ${fmt(x.diff)}</div></div>
+        <div class="g-card-sub">${x.pct.toFixed(0)}% del presupuesto consumido · acumulado ${mesesConDatos.length} meses</div>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+
+  // Evolución mensual
+  html += `<div class="g-section"><div class="g-section-title">📅 Evolución por mes</div>`;
+  monthStats.forEach((ms,i) => {
+    const pct = ms.presT>0 ? ms.realT/ms.presT*100 : 0;
+    const state = pct>100?'over':pct>80?'warn':'ok';
+    const color = pct>100?'var(--red)':pct>80?'var(--yellow)':'var(--green)';
+    html += `<div class="proj-bar-wrap g-card" style="animation-delay:${i*0.04}s">
+      <div class="proj-bar-header">
+        <div class="proj-bar-label">${ms.mes}</div>
+        <div class="proj-bar-vals">${fmt(ms.realT)} de ${fmt(ms.presT)} · <span style="color:${color};font-weight:600">${pct.toFixed(0)}%</span></div>
+      </div>
+      <div class="proj-track" style="height:8px;background:var(--surface2);border-radius:99px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(pct,100)}%;background:${color};border-radius:99px;transition:width 0.7s"></div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.62rem;margin-top:0.3rem;color:${ms.diff>=0?'var(--green)':'var(--red)'}">
+        ${ms.diff>=0?'▲ '+fmt(ms.diff)+' disponible':'▼ '+fmt(Math.abs(ms.diff))+' excedido'}
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Recomendaciones automáticas
+  const recos = [];
+  if (topNeg.length > 0) recos.push({icon:'🔴',title:`Controlá ${topNeg[0].h}`,desc:`Es la categoría con mayor exceso acumulado (${fmt(Math.abs(topNeg[0].diff))}). Revisá si el presupuesto es realista o si hay oportunidades de reducción.`,cls:'red'});
+  if (desvioProyAnual < 0) recos.push({icon:'🟠',title:'El año proyecta cierre en rojo',desc:`Al ritmo actual, el gasto anual superaría el presupuesto en ${fmt(Math.abs(desvioProyAnual))}. Conviene ajustar alguna categoría variable en los meses que restan.`,cls:'yellow'});
+  if (topPos.length > 0 && topPos[0].diff > 5000) recos.push({icon:'🟢',title:`Margen en ${topPos[0].h}`,desc:`Tiene ${fmt(topPos[0].diff)} de margen acumulado. Podrías reasignar parte de ese presupuesto a categorías que están en rojo.`,cls:'green'});
+  if (avgMensual > presGlobal/mesesConDatos.length) recos.push({icon:'🟡',title:'Gasto real supera la media presupuestada',desc:`El promedio mensual real (${fmt(avgMensual)}) es mayor al presupuestado (${fmt(presGlobal/mesesConDatos.length)}). Revisá qué categorías están traccionando ese exceso.`,cls:'yellow'});
+  if (recos.length === 0) recos.push({icon:'✅',title:'Todo en orden',desc:'Los gastos acumulados están dentro del presupuesto. Seguí así y revisá cada mes.',cls:'green'});
+
+  html += `<div class="g-section"><div class="g-section-title">💡 Recomendaciones</div>`;
+  recos.forEach((r,i) => {
+    html += `<div class="alert-item ${r.cls}" style="animation-delay:${i*0.05}s"><div class="alert-icon">${r.icon}</div><div class="alert-body"><div class="alert-title">${r.title}</div><div class="alert-desc">${r.desc}</div></div></div>`;
+  });
+  html += `</div>`;
+
+  html += `<div style="height:1rem"></div>`;
+  c.innerHTML = html;
 }
 
 loadData();
