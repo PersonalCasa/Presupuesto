@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Presupuesto">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Finanzas 2026</title>
+<title>Finanzas</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -176,7 +176,7 @@
 </div>
 <div id="dashboard" style="display:none">
   <div class="top-bar">
-    <div class="logo">Finanzas <span>2026</span></div>
+    <div class="logo">Finanzas</div>
     <button class="reload-btn" id="pdf-btn" onclick="generarPDF()" style="border-color:var(--accent);color:var(--accent)">🖨 PDF</button>
   </div>
   <div class="month-tabs" id="month-tabs"></div>
@@ -1232,7 +1232,7 @@ function generarPDF() {
       doc.setTextColor(255,255,255);
       doc.setFont('helvetica','bold');
       doc.setFontSize(16);
-      doc.text('Finanzas 2026', MARGIN+4, y+6);
+      doc.text('Finanzas', MARGIN+4, y+6);
       doc.setFontSize(9);
       doc.setFont('helvetica','normal');
       doc.text(`Resumen mensual — ${currentMes} 2026`, MARGIN+4, y+11);
@@ -1409,7 +1409,7 @@ function generarPDF() {
       doc.setFontSize(6.5);
       doc.setFont('helvetica','normal');
       doc.setTextColor(...MUTED);
-      doc.text('Generado desde Finanzas 2026 — personalcasa.github.io/Presupuesto', W/2, 290, {align:'center'});
+      doc.text('Generado desde Finanzas — personalcasa.github.io/Presupuesto', W/2, 290, {align:'center'});
 
       doc.save(`Presupuesto_${currentMes}_2026.pdf`);
     } catch(e) {
