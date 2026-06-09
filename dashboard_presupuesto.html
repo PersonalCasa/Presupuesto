@@ -240,7 +240,7 @@ const MESES = ['Mayo','Junio','Julio','Agosto','Setiembre','Octubre','Noviembre'
 const PRES_ROWS = {Mayo:3,Junio:4,Julio:5,Agosto:6,Setiembre:7,Octubre:8,Noviembre:9,Diciembre:10};
 const DIAS_MES  = {Mayo:31,Junio:30,Julio:31,Agosto:31,Setiembre:30,Octubre:31,Noviembre:30,Diciembre:31};
 const IDX_CONTENEDORES = 2;
-const IDX_TARJETA_REC  = 10;
+const IDX_TARJETA_REC  = 11; // col M - Tarjeta recompensa
 
 let data = {}, fondoData = {}, fondoGastos = [], currentMes = null, sortByPct = true, viewMode = 'month', subView = 'none', selectedCat = null, comparandoCat = false, compareCat2 = null, notasPorMes = {};
 
@@ -324,7 +324,7 @@ function parseWorkbook(wb) {
   if (!wsPres) { showError('No se encontró la hoja "Presupuesto"'); return; }
 
   const headers = [];
-  for (let c = 1; c <= 25; c++) {
+  for (let c = 1; c <= 27; c++) {
     const cell = wsPres[XLSX.utils.encode_cell({r:1,c})];
     headers.push(cell ? String(cell.v) : `Col${c}`);
   }
@@ -380,7 +380,11 @@ function parseWorkbook(wb) {
   }
 
   showLoading(false);
-  currentMes = MESES.find(m => Object.values(data[m].real).some(v=>v!==null)) || MESES[0];
+  // Abrir en el mes actual o el más cercano con datos
+  const mesActual = new Date().toLocaleString('es-UY', {month:'long'});
+  const mesCapital = mesActual.charAt(0).toUpperCase() + mesActual.slice(1);
+  const mesEnApp = MESES.find(m => m.toLowerCase() === mesCapital.toLowerCase());
+  currentMes = mesEnApp || MESES.find(m => Object.values(data[m].real).some(v=>v!==null)) || MESES[0];
   render();
 }
 
@@ -431,7 +435,7 @@ function renderTabs() {
       const realT = Object.values(d.real).reduce((a,b)=>a+(b||0),0);
       const pct = presT > 0 ? realT/presT*100 : 0;
       if (pct > 100) { semClass = 'sem-red'; semTitle = m+' ▼ excedido'; }
-      else if (pct > 80) { semClass = 'sem-yellow'; semTitle = m+' ⚠ ajustado'; }
+      else if (pct > 90) { semClass = 'sem-yellow'; semTitle = m+' ⚠ ajustado'; }
       else { semClass = 'sem-green'; semTitle = m+' ✓ OK'; }
     }
 
@@ -531,8 +535,8 @@ function renderKPIs() {
       label:'Ejecutado',
       value:realTotal!==null?fmt(realTotal):'Sin datos',
       sub:pct!==null?pct.toFixed(1)+'% del presupuesto':'Cargá datos del mes',
-      cls:pct===null?'':pct>100?'negative':pct>80?'warning':'positive',
-      bar:pct!==null?{pct:Math.min(pct,100),color:pct>100?'var(--red)':pct>80?'var(--yellow)':'var(--green)'}:null,
+      cls:pct===null?'':pct>100?'negative':pct>90?'warning':'positive',
+      bar:pct!==null?{pct:Math.min(pct,100),color:pct>100?'var(--red)':pct>90?'var(--yellow)':'var(--green)'}:null,
       sub2:null
     },
     {
@@ -977,19 +981,28 @@ function toggleNotaEdit() {
 function saveNota(mes) {
   const ta = document.querySelector('#nota-edit textarea');
   notasPorMes[mes] = ta.value.trim();
+  try { localStorage.setItem('finanzas_notas', JSON.stringify(notasPorMes)); } catch(e) {}
   renderNota();
+}
+
+function loadNotas() {
+  try {
+    const saved = localStorage.getItem('finanzas_notas');
+    if (saved) notasPorMes = JSON.parse(saved);
+  } catch(e) {}
 }
 
 function renderEstructura() {
   const c = document.getElementById('estructura-main');
   const GRUPOS = [
-    { id:'camioneta', label:'🚗 Camioneta', color:'#3b82f6', cats:['Seguro','Patente','Nafta y peaje','Servicio camioneta'] },
-    { id:'hogar',     label:'🏠 Hogar',     color:'#f59e0b', cats:['Luz','Ablandador','Internet','SIET','Limpieza','Suscripciones','Banco y seguros','Comida','Gastos terreno','Amandaye'] },
-    { id:'familia',   label:'👶 Familia',   color:'#ec4899', cats:['Niñera','Perros','paseo','AECO','Jardin'] },
-    { id:'jardin',    label:'🌿 Jardín',    color:'#22c55e', cats:['Corte pasto','Jardineria'] },
-    { id:'tarjetas',  label:'💳 Tarjetas',  color:'#8b5cf6', cats:['Tarjeta ITAU','Tarjeta recompensa'] },
-    { id:'inversion', label:'💼 Inversión', color:'#06b6d4', cats:['Contenedores'] },
-    { id:'variable',  label:'🎁 Variable',  color:'#f97316', cats:['Regalos','Extra'] },
+    { id:'camioneta', label:'🚗 Camioneta',  color:'#3b82f6', cats:['Seguro','Patente','Nafta y peaje','Servicio camioneta'] },
+    { id:'hogar',     label:'🏠 Hogar',      color:'#f59e0b', cats:['Luz','Ablandador','Internet','SIET','Limpieza','Banco y seguros','Comida','Gastos terreno','Amandaye','Gas y calefacción'] },
+    { id:'familia',   label:'👶 Familia',    color:'#ec4899', cats:['Niñera','Perros','paseo','AECO','Jardin'] },
+    { id:'jardin',    label:'🌿 Jardín',     color:'#22c55e', cats:['Corte pasto','Jardineria'] },
+    { id:'tarjetas',  label:'💳 Tarjetas',   color:'#8b5cf6', cats:['Tarjeta CDE','Tarjeta ITAU','Tarjeta recompensa'] },
+    { id:'inversion', label:'💼 Inversión',  color:'#06b6d4', cats:['Contenedores'] },
+    { id:'variable',  label:'🎁 Variable',   color:'#f97316', cats:['Regalos','Extra'] },
+    { id:'cumple',    label:'🎂 Cumple Roci',color:'#ec4899', cats:['Cumple Roci'] },
   ];
 
   const presTotales = {};
@@ -1420,6 +1433,7 @@ function generarPDF() {
   }, 100);
 }
 
+loadNotas();
 loadData();
 
 </script>
